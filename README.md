@@ -2,7 +2,7 @@
 
 [English Version](README_EN.md) | [中文版](README.md)
 
-![Release](https://img.shields.io/github/v/release/shenyue-ge/Changyetxt?label=Release)
+![Release](https://img.shields.io/github/v/release/shenyue-ge/Changyetxt?color=success&label=Release)
 ![Platform](https://img.shields.io/badge/Platform-Wear%20OS%20%7C%20Android-blue)
 ![License](https://img.shields.io/badge/License-Copyright-lightgrey)
 
