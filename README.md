@@ -1,10 +1,10 @@
-# 🌙 ChangyeReader（长夜腕阅）
+# 🌙 ChangyeTXT（长夜腕阅）
 
 ![Release](https://img.shields.io/github/v/release/YourGitHubName/Changyetxt?label=Release)
 ![Platform](https://img.shields.io/badge/Platform-Wear%20OS%20%7C%20Android-blue)
 ![License](https://img.shields.io/badge/License-Copyright-lightgrey)
 
-ChangyeReader 是一个面向 Wear OS 的电子书阅读器，同时提供 Android 手机端用于局域网传书。
+ChangyeTXT 是一个面向 Wear OS 的电子书阅读器，同时提供 Android 手机端用于局域网传书。
 
 项目目前支持 EPUB、TXT 电子书格式，并针对手表设备的内存和性能限制进行了适配。
 
