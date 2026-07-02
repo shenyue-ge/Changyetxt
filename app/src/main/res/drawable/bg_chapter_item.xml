@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <!-- 内部填充黑色 -->
+    <solid android:color="#000000" />
+    <!-- 边缘红色细线，2dp粗细 -->
+    <stroke android:width="2dp" android:color="#FF3B30" />
+    <!-- 圆角，数值越大越像胶囊 -->
+    <corners android:radius="24dp" />
+</shape>

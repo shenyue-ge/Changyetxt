@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <ScrollView android:id="@+id/home_view" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:scrollbars="none">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:paddingTop="40dp" android:paddingBottom="48dp" android:paddingHorizontal="24dp">
+
+            <ImageView android:layout_width="52dp" android:layout_height="52dp" android:src="@drawable/ic_logo" android:scaleType="fitCenter" android:layout_marginBottom="8dp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="长夜腕阅" android:textColor="#D0BCFF" android:textSize="18sp" android:textStyle="bold" android:letterSpacing="0.1" android:layout_marginBottom="28dp"/>
+
+            <LinearLayout android:id="@+id/btn_home_library" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_home_item" android:gravity="center_vertical" android:paddingHorizontal="20dp" android:layout_marginBottom="12dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📚" android:textSize="20sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="我的书架" android:textColor="#E6E0E9" android:textSize="16sp" android:textStyle="bold"/>
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/btn_home_import" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_home_item" android:gravity="center_vertical" android:paddingHorizontal="20dp" android:layout_marginBottom="12dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📡" android:textSize="20sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="导入书籍" android:textColor="#E6E0E9" android:textSize="16sp" android:textStyle="bold"/>
+            </LinearLayout>
+
+
+            <LinearLayout android:id="@+id/btn_home_settings" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_home_item" android:gravity="center_vertical" android:paddingHorizontal="20dp" android:layout_marginBottom="12dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🧩" android:textSize="20sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="应用设置" android:textColor="#E6E0E9" android:textSize="16sp" android:textStyle="bold"/>
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/btn_home_about" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_home_item" android:gravity="center_vertical" android:paddingHorizontal="20dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ℹ️" android:textSize="20sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="关于应用" android:textColor="#E6E0E9" android:textSize="16sp" android:textStyle="bold"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- ================= 我的书架层 ================= -->
+    <RelativeLayout android:id="@+id/library_container" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:visibility="gone">
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/library_view" android:layout_width="match_parent" android:layout_height="match_parent" android:paddingTop="36dp" android:paddingBottom="36dp" android:clipToPadding="false" android:scrollbars="none" />
+        <TextView android:id="@+id/text_empty_library" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="书架空空如也\n请先导入书籍" android:textColor="#555555" android:textSize="14sp" android:gravity="center" android:lineSpacingExtra="6dp" android:layout_centerInParent="true" android:visibility="gone"/>
+    </RelativeLayout>
+
+    <RelativeLayout android:id="@+id/directory_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone">
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/directory_view" android:layout_width="match_parent" android:layout_height="match_parent" android:paddingTop="28dp" android:paddingBottom="56dp" android:clipToPadding="false" android:scrollbars="none" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="50dp" android:layout_alignParentBottom="true" android:background="#000000" android:gravity="center" android:orientation="horizontal" android:paddingHorizontal="32dp">
+            <SeekBar android:id="@+id/bottom_seek_bar" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" android:thumbTint="#E91E63" android:progressTint="#FF3B30" android:progressBackgroundTint="#444444" android:splitTrack="false" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <RelativeLayout android:id="@+id/reading_view" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000000">
+        <ScrollView android:id="@+id/reading_scroll_view" android:layout_width="match_parent" android:layout_height="match_parent" android:scrollbars="vertical" android:fadeScrollbars="true" android:scrollbarSize="3dp" android:scrollbarStyle="insideOverlay">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingHorizontal="32dp" android:paddingTop="36dp" android:paddingBottom="40dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center" android:paddingBottom="12dp">
+                    <TextView android:id="@+id/text_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#888888" android:textSize="12sp" android:text="00:00" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#555555" android:textSize="10sp" android:text="  |  " />
+                    <TextView android:id="@+id/text_battery" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#888888" android:textSize="12sp" android:text="100%" />
+                </LinearLayout>
+                <TextView android:id="@+id/text_content" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="16sp" android:lineSpacingExtra="2dp" />
+            </LinearLayout>
+        </ScrollView>
+        <View android:id="@+id/btn_page_up" android:layout_width="60dp" android:layout_height="match_parent" android:layout_alignParentStart="true" android:background="@android:color/transparent" android:clickable="true" android:focusable="true" />
+        <View android:id="@+id/btn_page_down" android:layout_width="60dp" android:layout_height="match_parent" android:layout_alignParentEnd="true" android:background="@android:color/transparent" android:clickable="true" android:focusable="true" />
+    </RelativeLayout>
+
+    <ScrollView android:id="@+id/menu_view" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#F2000000" android:visibility="gone">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_vertical" android:padding="24dp">
+            <LinearLayout android:id="@+id/menu_item_toc" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingTop="12dp" android:paddingBottom="12dp">
+                <TextView android:layout_width="36dp" android:layout_height="36dp" android:background="#444444" android:gravity="center" android:text="📑" android:textSize="18sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="小说目录" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/menu_item_library" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingTop="12dp" android:paddingBottom="12dp">
+                <TextView android:layout_width="36dp" android:layout_height="36dp" android:background="#444444" android:gravity="center" android:text="📚" android:textSize="18sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="返回书架" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/menu_item_add_bookmark" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingTop="12dp" android:paddingBottom="12dp">
+                <TextView android:layout_width="36dp" android:layout_height="36dp" android:background="#444444" android:gravity="center" android:text="🔖" android:textSize="18sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="添加书签" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/menu_item_bookmarks_manage" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingTop="12dp" android:paddingBottom="12dp">
+                <TextView android:layout_width="36dp" android:layout_height="36dp" android:background="#444444" android:gravity="center" android:text="🏷️" android:textSize="18sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="书签管理" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/menu_item_prefs" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingTop="12dp" android:paddingBottom="12dp">
+                <TextView android:layout_width="36dp" android:layout_height="36dp" android:background="#444444" android:gravity="center" android:text="⚙️" android:textSize="18sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="阅读设置" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <ScrollView android:id="@+id/ip_input_view" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:visibility="gone">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:padding="24dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="输入手机IP地址" android:textColor="#FFFFFF" android:textSize="14sp" android:layout_marginTop="16dp" android:layout_marginBottom="12dp"/>
+            <EditText android:id="@+id/edit_ip" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textUri" android:textColor="#FFFFFF" android:backgroundTint="#E91E63" android:hint="192.168.x.x" android:textColorHint="#888888" android:textSize="14sp" android:gravity="center" android:layout_marginBottom="12dp"/>
+            <Button android:id="@+id/btn_connect" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="连接下载" android:backgroundTint="#E91E63" android:textColor="#FFFFFF"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <ScrollView android:id="@+id/prefs_view" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:visibility="gone">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:padding="32dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="应用设置" android:textColor="#888888" android:textSize="14sp" android:layout_marginBottom="16dp"/>
+            <Button android:id="@+id/btn_menu_auto_scroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="自动阅读" android:backgroundTint="#444444" android:textColor="#FFFFFF" android:layout_marginBottom="8dp"/>
+            <Button android:id="@+id/btn_menu_display" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="显示设置" android:backgroundTint="#444444" android:textColor="#FFFFFF"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <ScrollView android:id="@+id/auto_scroll_prefs_view" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:visibility="gone">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:padding="32dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="自动阅读" android:textColor="#888888" android:textSize="14sp" android:layout_marginBottom="16dp"/>
+            <Button android:id="@+id/btn_toggle_auto_scroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="开关：关" android:backgroundTint="#444444" android:textColor="#FFFFFF" android:layout_marginBottom="8dp"/>
+            <Button android:id="@+id/btn_toggle_speed" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="速度：中" android:backgroundTint="#444444" android:textColor="#FFFFFF"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <ScrollView android:id="@+id/display_prefs_view" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:visibility="gone">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:paddingTop="32dp" android:paddingBottom="32dp" android:paddingHorizontal="24dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="显示设置" android:textColor="#888888" android:textSize="14sp" android:layout_marginBottom="16dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center" android:layout_marginBottom="12dp">
+                <Button android:id="@+id/btn_bright_down" android:layout_width="45dp" android:layout_height="45dp" android:text="-" android:textSize="18sp" android:backgroundTint="#444444" android:textColor="#FFFFFF" />
+                <TextView android:id="@+id/tv_bright_level" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="亮度: 默认" android:textColor="#FFFFFF" android:textSize="14sp" android:gravity="center"/>
+                <Button android:id="@+id/btn_bright_up" android:layout_width="45dp" android:layout_height="45dp" android:text="+" android:textSize="18sp" android:backgroundTint="#444444" android:textColor="#FFFFFF" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center">
+                <Button android:id="@+id/btn_font_down" android:layout_width="45dp" android:layout_height="45dp" android:text="A-" android:textSize="14sp" android:backgroundTint="#444444" android:textColor="#FFFFFF" />
+                <TextView android:id="@+id/tv_font_size" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="字号: 16" android:textColor="#FFFFFF" android:textSize="14sp" android:gravity="center"/>
+                <Button android:id="@+id/btn_font_up" android:layout_width="45dp" android:layout_height="45dp" android:text="A+" android:textSize="14sp" android:backgroundTint="#444444" android:textColor="#FFFFFF" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <RelativeLayout android:id="@+id/bookmark_list_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000000">
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/bookmark_view" android:layout_width="match_parent" android:layout_height="match_parent" android:paddingTop="28dp" android:paddingBottom="28dp" android:clipToPadding="false" android:scrollbars="none" />
+        <TextView android:id="@+id/text_no_bookmarks" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="暂无书签" android:textColor="#555555" android:layout_centerInParent="true" android:visibility="gone"/>
+    </RelativeLayout>
+
+    <!-- ================= 导入书籍子菜单层 ================= -->
+    <ScrollView android:id="@+id/import_menu_view" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:visibility="gone">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:paddingTop="48dp" android:paddingBottom="48dp" android:paddingHorizontal="24dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="选择导入方式" android:textColor="#888888" android:textSize="14sp" android:layout_marginBottom="24dp"/>
+
+            <!-- 局域网导入按钮 -->
+            <LinearLayout android:id="@+id/btn_import_lan" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_home_item" android:gravity="center_vertical" android:paddingHorizontal="20dp" android:layout_marginBottom="12dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🌐" android:textSize="20sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="局域网导入" android:textColor="#E6E0E9" android:textSize="15sp" android:textStyle="bold"/>
+            </LinearLayout>
+
+            <!-- 本地文件选取按钮 -->
+            <LinearLayout android:id="@+id/btn_import_local" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_home_item" android:gravity="center_vertical" android:paddingHorizontal="20dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📁" android:textSize="20sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="本地导入 (TXT)" android:textColor="#E6E0E9" android:textSize="15sp" android:textStyle="bold"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- ================= 本地文件扫描层 ================= -->
+    <RelativeLayout android:id="@+id/local_import_container" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:visibility="gone">
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/local_files_view" android:layout_width="match_parent" android:layout_height="match_parent" android:paddingTop="36dp" android:paddingBottom="36dp" android:clipToPadding="false" android:scrollbars="none" />
+        <TextView android:id="@+id/text_no_local_files" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="未在手表存储中找到任何 TXT 文件" android:textColor="#555555" android:textSize="12sp" android:layout_centerInParent="true" android:visibility="gone"/>
+    </RelativeLayout>
+
+    <!-- ================= 关于应用层 (全新独立开发者名片版) ================= -->
+    <ScrollView android:id="@+id/about_view" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:visibility="gone">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:paddingTop="48dp" android:paddingBottom="32dp" android:paddingHorizontal="24dp">
+
+            <!-- Logo 与版本号 -->
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="4dp">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_logo" android:scaleType="fitCenter" android:layout_marginEnd="8dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="长夜腕阅" android:textColor="#D0BCFF" android:textSize="18sp" android:textStyle="bold"/>
+            </LinearLayout>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Version 1.0.0" android:textColor="#AAAAAA" android:textSize="12sp" android:layout_marginBottom="32dp"/>
+
+            <!-- 联系方式专属卡片 (复用主页的胶囊背景) -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_home_item" android:orientation="vertical" android:gravity="center" android:paddingVertical="16dp" android:layout_marginBottom="32dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="意见反馈 / 作者 QQ" android:textColor="#AAAAAA" android:textSize="12sp" android:layout_marginBottom="4dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="7586380" android:textColor="#E6E0E9" android:textSize="20sp" android:textStyle="bold" android:letterSpacing="0.1"/>
+            </LinearLayout>
+
+            <!-- 底部 Copyright 声明 (你可以把 Thomas Perez 替换为你想要的名称) -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Copyright © 2026\nShen Yue. All rights reserved." android:textColor="#444444" android:textSize="10sp" android:gravity="center" android:lineSpacingExtra="4dp"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- 全新追加：全局加载进度遮罩 (具有阻挡下层点击的作用) -->
+    <RelativeLayout android:id="@+id/loading_view" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#E6000000" android:clickable="true" android:focusable="true" android:visibility="gone">
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:layout_centerInParent="true">
+            <!-- 采用 M3 主题淡紫色的无极旋转进度条 -->
+            <ProgressBar android:layout_width="48dp" android:layout_height="48dp" android:indeterminateTint="#D0BCFF" android:layout_marginBottom="12dp"/>
+            <TextView android:id="@+id/text_loading_status" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="正在处理..." android:textColor="#D0BCFF" android:textSize="14sp" android:textStyle="bold"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+</FrameLayout>

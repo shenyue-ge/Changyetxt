@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 使用手表专属的系统原生纯黑主题，彻底消灭白底弹窗 -->
+    <style name="Theme.Changyetxt" parent="@android:style/Theme.DeviceDefault">
+
+        <!-- 保持对系统默认右滑闪退的禁用 -->
+        <item name="android:windowSwipeToDismiss">false</item>
+
+    </style>
+</resources>

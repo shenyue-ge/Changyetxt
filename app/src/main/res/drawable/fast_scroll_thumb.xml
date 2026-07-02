@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <!-- 滑块颜色：亮粉/紫红色 -->
+    <solid android:color="#E91E63" />
+    <size android:width="12dp" android:height="36dp" />
+</shape>
