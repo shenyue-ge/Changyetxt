@@ -40,8 +40,8 @@ Developed by a human, with Google Gemini as the primary coding assistant.
 
 1. Download the latest release from the repository's **Releases** page.
 
-   * `ChangyeReader_WearOS_vX.X.X.apk`
-   * `ChangyeReader_Mobile_vX.X.X.apk`
+   * `ChangyeTXT_WearOS_vX.X.X.apk`
+   * `ChangyeTXT_Mobile_vX.X.X.apk`
 
 2. Install the Android APK.
 
