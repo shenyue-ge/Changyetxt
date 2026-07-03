@@ -40,8 +40,8 @@ ChangyeTXT 是一个面向 Wear OS 的电子书阅读器，同时提供 Android 
 
 1. 在仓库 **Releases** 页面下载最新版本。
 
-* `ChangyeReader_WearOS_vX.X.X.apk`
-* `ChangyeReader_Mobile_vX.X.X.apk`
+* `ChangyeTXT_WearOS_vX.X.X.apk`
+* `ChangyeTXT_Mobile_vX.X.X.apk`
 
 2. 安装手机端 APK。
 
