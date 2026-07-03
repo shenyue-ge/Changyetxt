@@ -192,7 +192,7 @@ class MainActivity : ComponentActivity() {
             false
         }
 
-        // 路由中心重构：全部切换为控制 libraryContainer
+        // 路由中心
         findViewById<View>(R.id.btn_home_library).setOnClickListener { homeView.visibility = View.GONE; libraryContainer.visibility = View.VISIBLE; refreshLibrary() }
         findViewById<View>(R.id.btn_home_settings).setOnClickListener { isSettingsFromReading = false; homeView.visibility = View.GONE; prefsView.visibility = View.VISIBLE }
         findViewById<View>(R.id.btn_home_about).setOnClickListener { homeView.visibility = View.GONE; aboutView.visibility = View.VISIBLE }
@@ -292,7 +292,7 @@ class MainActivity : ComponentActivity() {
         if (startupIp.isNotBlank() && !startupIp.endsWith(".")) fetchNovelFromServer(startupIp, isSilent = true)
     }
 
-    // ================= 核心：全盘雷达扫描引擎 =================
+    // ================= 全盘扫描 =================
     private fun scanAllLocalTxtFiles() {
         importMenuView.visibility = View.GONE
         loadingView.visibility = View.VISIBLE
@@ -332,7 +332,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ================= 核心：本地 TXT 切割引擎 =================
+    // ================= 本地 TXT 切割 =================
     private fun parseLocalTxtFile(file: File) {
         loadingView.visibility = View.VISIBLE
         textLoadingStatus.text = "引擎启动：智能分卷切分中..."
@@ -376,7 +376,7 @@ class MainActivity : ComponentActivity() {
                         } else {
                             if (trimmed.isNotEmpty()) currentContent.append(trimmed).append("\n\n")
 
-                            // 情况 B：如果字数膨胀超过 3000 字，立刻切断！
+                            // 情况 B：如果字数膨胀超过 3000 字，切断
                             if (currentContent.length >= 3000) {
                                 val titleToSave = if (partCount == 1) currentTitle else "$currentTitle ($partCount)"
                                 File(bookDir, "chap_${chapterIndex}.txt").writeText(currentContent.toString())
@@ -621,52 +621,89 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun fetchNovelFromServer(targetIp: String, isSilent: Boolean = false) {
-        if (!isSilent) { loadingView.visibility = View.VISIBLE; textLoadingStatus.text = "正在下载数据..." }
+        if (!isSilent) {
+            loadingView.visibility = View.VISIBLE
+            textLoadingStatus.text = "正在下载数据..."
+        }
         lifecycleScope.launch {
             try {
+                // 1. 网络下载 JSON
                 val jsonString = withContext(Dispatchers.IO) {
                     val url = URL("http://$targetIp:8080")
                     val connection = url.openConnection() as HttpURLConnection
-                    connection.requestMethod = "GET"; connection.connectTimeout = 3000; connection.readTimeout = 3000
-                    if (connection.responseCode == 200) connection.inputStream.bufferedReader().use { it.readText() } else throw Exception("Failed")
+                    connection.requestMethod = "GET"
+                    connection.connectTimeout = 5000
+                    connection.readTimeout = 20000
+                    connection.doInput = true
+                    connection.useCaches = false
+
+                    if (connection.responseCode == 200) {
+                        connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                    } else {
+                        throw Exception("服务器返回异常代码: ${connection.responseCode}")
+                    }
                 }
 
-                if (!isSilent) withContext(Dispatchers.Main) { textLoadingStatus.text = "正在接收排版..." }
-                val payload = withContext(Dispatchers.Default) { Gson().fromJson(jsonString, NovelPayload::class.java) }
+                if (jsonString.isBlank()) throw Exception("接收到空数据")
 
-                if (payload.chapters.isNotEmpty()) {
-                    val cleanTitle = payload.bookName.replace(Regex("""[^a-zA-Z0-9\u4e00-\u9fa5《》〈〉()（）\[\]【】"“”'‘’,.，。！？!?_\- ]"""), "").take(50)
+                // 2. 解析
+                if (!isSilent) withContext(Dispatchers.Main) {
+                    textLoadingStatus.text = "正在接收排版..."
+                }
 
-                    val existingDirs = filesDir.listFiles { f -> f.isDirectory && f.name.startsWith("book_") } ?: emptyArray()
-                    val isDuplicate = existingDirs.any { it.name.substringAfterLast("_") == cleanTitle }
+                val payload = withContext(Dispatchers.Default) {
+                    Gson().fromJson(jsonString, NovelPayload::class.java)
+                }
 
-                    if (isDuplicate) {
-                        withContext(Dispatchers.Main) {
-                            if (!isSilent) { loadingView.visibility = View.GONE; Toast.makeText(this@MainActivity, "《${cleanTitle}》已存在", Toast.LENGTH_SHORT).show() }
-                            refreshLibrary()
-                        }
-                        return@launch
-                    }
+                if (payload.chapters.isEmpty()) {
+                    throw Exception("书籍章节为空，请检查手机端文件")
+                }
 
-                    if (!isSilent) withContext(Dispatchers.Main) { textLoadingStatus.text = "正在写入手腕..." }
-                    val bookDir = File(filesDir, "book_${System.currentTimeMillis()}_$cleanTitle")
+                // 3. 清洗书名（与本地导入逻辑相同）
+                val cleanTitle = payload.bookName
+                    .replace(Regex("""[^a-zA-Z0-9\u4e00-\u9fa5《》〈〉()（）\[\]【】"“”'‘’,.，。！？!?_\- ]"""), "")
+                    .take(50)
+                    .ifBlank { "无线导入书籍" }
 
-                    withContext(Dispatchers.IO) {
-                        bookDir.mkdirs()
-                        val lightMetaChapters = payload.chapters.mapIndexed { index, chapter ->
-                            File(bookDir, "chap_$index.txt").writeText(chapter.content)
-                            Chapter(title = chapter.title, content = "")
-                        }
-                        File(bookDir, "meta.json").writeText(Gson().toJson(lightMetaChapters))
-                    }
-
+                // 4. 查重
+                val existingDirs = filesDir.listFiles { f -> f.isDirectory && f.name.startsWith("book_") } ?: emptyArray()
+                if (existingDirs.any { it.name.substringAfterLast("_") == cleanTitle }) {
                     withContext(Dispatchers.Main) {
-                        if (!isSilent) { loadingView.visibility = View.GONE; Toast.makeText(this@MainActivity, "成功接收: $cleanTitle", Toast.LENGTH_SHORT).show() }
-                        refreshLibrary()
+                        loadingView.visibility = View.GONE
+                        Toast.makeText(this@MainActivity, "《${cleanTitle}》已在书架中", Toast.LENGTH_SHORT).show()
                     }
+                    return@launch
                 }
+
+                // 5. 创建书籍目录，写入章节和元数据
+                val bookDir = File(filesDir, "book_${System.currentTimeMillis()}_$cleanTitle")
+                bookDir.mkdirs()
+
+                withContext(Dispatchers.IO) {
+                    payload.chapters.forEachIndexed { index, chapter ->
+                        val file = File(bookDir, "chap_$index.txt")
+                        file.writeText(chapter.content)  // 字段名匹配你的 Chapter 类
+                    }
+                    // 保存目录信息
+                    val metaJson = Gson().toJson(payload.chapters)
+                    File(bookDir, "meta.json").writeText(metaJson)
+                }
+
+                // 6. 完成：关闭加载界面，提示并刷新书架
+                withContext(Dispatchers.Main) {
+                    loadingView.visibility = View.GONE
+                    Toast.makeText(this@MainActivity, "《${cleanTitle}》导入成功", Toast.LENGTH_SHORT).show()
+                    // 返回书架并刷新
+                    libraryContainer.visibility = View.VISIBLE
+                    refreshLibrary()
+                }
+
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) { if (!isSilent) { loadingView.visibility = View.GONE; Toast.makeText(this@MainActivity, "网络连接失败", Toast.LENGTH_SHORT).show() } }
+                // 异常处理：关闭加载界面并提示
+                withContext(Dispatchers.Main) {
+                    loadingView.visibility = View.GONE
+                    Toast.makeText(this@MainActivity, "传输失败: ${e.message}", Toast.LENGTH_LONG).show()
+                }
             }
         }
     }

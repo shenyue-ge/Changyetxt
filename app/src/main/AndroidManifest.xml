@@ -17,7 +17,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Changyetxt"> <!-- 这里改回了原来的主题名，且结尾加上了正确的尖括号 > -->
+        android:theme="@style/Theme.Changyetxt">
 
         <!-- 声明应用可以独立运行 -->
         <meta-data

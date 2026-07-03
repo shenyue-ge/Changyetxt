@@ -9,6 +9,6 @@ data class Bookmark(
     val chapterIndex: Int,   // 章节索引
     val scrollY: Int,        // 滑动位置(精确到像素)
     val chapterTitle: String,// 章节标题
-    var snippet: String,     // 预览文字(默认抓取屏幕，可被用户修改)
+    var snippet: String,     // 预览文字(默认抓取屏幕，可修改)
     val timestamp: Long      // 添加时间，用于排序
 )

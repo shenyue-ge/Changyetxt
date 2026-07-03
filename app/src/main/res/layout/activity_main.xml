@@ -22,7 +22,7 @@
 
 
             <LinearLayout android:id="@+id/btn_home_settings" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_home_item" android:gravity="center_vertical" android:paddingHorizontal="20dp" android:layout_marginBottom="12dp">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🧩" android:textSize="20sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚙️" android:textSize="20sp" android:layout_marginEnd="16dp"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="应用设置" android:textColor="#E6E0E9" android:textSize="16sp" android:textStyle="bold"/>
             </LinearLayout>
 
@@ -158,7 +158,7 @@
         <TextView android:id="@+id/text_no_local_files" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="未在手表存储中找到任何 TXT 文件" android:textColor="#555555" android:textSize="12sp" android:layout_centerInParent="true" android:visibility="gone"/>
     </RelativeLayout>
 
-    <!-- ================= 关于应用层 (全新独立开发者名片版) ================= -->
+    <!-- ================= 关于应用层 ================= -->
     <ScrollView android:id="@+id/about_view" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:visibility="gone">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:paddingTop="48dp" android:paddingBottom="32dp" android:paddingHorizontal="24dp">
 
@@ -167,24 +167,24 @@
                 <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_logo" android:scaleType="fitCenter" android:layout_marginEnd="8dp"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="长夜腕阅" android:textColor="#D0BCFF" android:textSize="18sp" android:textStyle="bold"/>
             </LinearLayout>
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Version 1.0.0" android:textColor="#AAAAAA" android:textSize="12sp" android:layout_marginBottom="32dp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Version 1.0.1" android:textColor="#AAAAAA" android:textSize="12sp" android:layout_marginBottom="32dp"/>
 
-            <!-- 联系方式专属卡片 (复用主页的胶囊背景) -->
+            <!-- 联系方式) -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_home_item" android:orientation="vertical" android:gravity="center" android:paddingVertical="16dp" android:layout_marginBottom="32dp">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="意见反馈 / 作者 QQ" android:textColor="#AAAAAA" android:textSize="12sp" android:layout_marginBottom="4dp"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="7586380" android:textColor="#E6E0E9" android:textSize="20sp" android:textStyle="bold" android:letterSpacing="0.1"/>
             </LinearLayout>
 
-            <!-- 底部 Copyright 声明 (你可以把 Thomas Perez 替换为你想要的名称) -->
+            <!-- 底部声明  -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Copyright © 2026\nShen Yue. All rights reserved." android:textColor="#444444" android:textSize="10sp" android:gravity="center" android:lineSpacingExtra="4dp"/>
 
         </LinearLayout>
     </ScrollView>
 
-    <!-- 全新追加：全局加载进度遮罩 (具有阻挡下层点击的作用) -->
+    <!-- 加载进度  -->
     <RelativeLayout android:id="@+id/loading_view" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#E6000000" android:clickable="true" android:focusable="true" android:visibility="gone">
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:layout_centerInParent="true">
-            <!-- 采用 M3 主题淡紫色的无极旋转进度条 -->
+            <!-- 进度条 -->
             <ProgressBar android:layout_width="48dp" android:layout_height="48dp" android:indeterminateTint="#D0BCFF" android:layout_marginBottom="12dp"/>
             <TextView android:id="@+id/text_loading_status" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="正在处理..." android:textColor="#D0BCFF" android:textSize="14sp" android:textStyle="bold"/>
         </LinearLayout>

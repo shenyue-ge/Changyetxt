@@ -26,7 +26,7 @@ class LibraryAdapter(
         val displayName = file.name.substringAfterLast("_").removeSuffix(".json")
         holder.titleView.text = "📚 $displayName"
 
-        // 【核心魔法】：强制激活文字选中状态，触发跑马灯滚动
+        // 激活文字选中状态，触发跑马灯滚动
         holder.titleView.isSelected = true
 
         holder.itemView.setOnClickListener { onItemClick(file) }

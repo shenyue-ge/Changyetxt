@@ -31,7 +31,15 @@
 
         <Button android:id="@+id/btn_select_file" android:layout_width="match_parent" android:layout_height="60dp" android:text="选择电子书 (EPUB/TXT)" android:backgroundTint="#D0BCFF" android:textColor="#332D41" android:textSize="16sp" android:textStyle="bold" android:layout_marginBottom="24dp"/>
 
-        <TextView android:id="@+id/text_server_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="等待选择文件..." android:textColor="#E6E0E9" android:textSize="14sp" android:gravity="center" android:lineSpacingExtra="6dp"/>
+        <TextView
+            android:id="@+id/tv_file_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="等待选择文件..."
+            android:textColor="#E6E0E9"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:lineSpacingExtra="6dp"/>
     </LinearLayout>
 
     <!-- ================= 3. 专属名片关于层 ================= -->
@@ -39,7 +47,7 @@
 
         <ImageView android:layout_width="64dp" android:layout_height="64dp" android:src="@drawable/ic_logo" android:layout_marginBottom="12dp"/>
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="长夜腕阅" android:textColor="#D0BCFF" android:textSize="22sp" android:textStyle="bold" android:layout_marginBottom="4dp"/>
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Version 1.0.0 (Data Hub)" android:textColor="#AAAAAA" android:textSize="14sp" android:layout_marginBottom="48dp"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Version 1.0.1 " android:textColor="#AAAAAA" android:textSize="14sp" android:layout_marginBottom="48dp"/>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_home_item" android:orientation="vertical" android:gravity="center" android:paddingVertical="24dp" android:layout_marginBottom="48dp">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="意见反馈 / 交流 QQ" android:textColor="#AAAAAA" android:textSize="14sp" android:layout_marginBottom="8dp"/>

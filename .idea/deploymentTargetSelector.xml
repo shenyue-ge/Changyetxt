@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-07-02T15:45:19.979027900Z">
+        <DropdownSelection timestamp="2026-07-02T19:03:59.295672200Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=R5GYC4VC0RE" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.31.145:5555;connection=9c2913e3" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,10 +15,10 @@
       </SelectionState>
       <SelectionState runConfigName="changyemobiletxt">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-07-02T12:11:08.301549400Z">
+        <DropdownSelection timestamp="2026-07-02T19:03:52.031872200Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=R5GYC4VC0RE" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.31.145:5555;connection=9c2913e3" />
             </handle>
           </Target>
         </DropdownSelection>
