@@ -25,6 +25,9 @@ android {
             optimization {
                 enable = false
             }
+            // 历史版本（v1.0.0/v1.0.1）均以 debug 密钥签名发布，
+            // 保持一致以保证用户可覆盖升级；无需在仓库中保存密码
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
