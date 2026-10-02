@@ -143,10 +143,16 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="局域网导入" android:textColor="#E6E0E9" android:textSize="15sp" android:textStyle="bold"/>
             </LinearLayout>
 
-            <!-- 本地文件选取按钮 -->
-            <LinearLayout android:id="@+id/btn_import_local" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_home_item" android:gravity="center_vertical" android:paddingHorizontal="20dp">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📁" android:textSize="20sp" android:layout_marginEnd="16dp"/>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="本地导入 (TXT)" android:textColor="#E6E0E9" android:textSize="15sp" android:textStyle="bold"/>
+            <!-- 全盘扫描按钮 -->
+            <LinearLayout android:id="@+id/btn_import_local" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_home_item" android:gravity="center_vertical" android:paddingHorizontal="20dp" android:layout_marginBottom="12dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔍" android:textSize="20sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="全盘扫描 (TXT)" android:textColor="#E6E0E9" android:textSize="15sp" android:textStyle="bold"/>
+            </LinearLayout>
+
+            <!-- 手动选择文件按钮 -->
+            <LinearLayout android:id="@+id/btn_import_browse" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_home_item" android:gravity="center_vertical" android:paddingHorizontal="20dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📂" android:textSize="20sp" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="手动选择 (TXT/EPUB)" android:textColor="#E6E0E9" android:textSize="15sp" android:textStyle="bold"/>
             </LinearLayout>
 
         </LinearLayout>
@@ -155,7 +161,14 @@
     <!-- ================= 本地文件扫描层 ================= -->
     <RelativeLayout android:id="@+id/local_import_container" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:visibility="gone">
         <androidx.recyclerview.widget.RecyclerView android:id="@+id/local_files_view" android:layout_width="match_parent" android:layout_height="match_parent" android:paddingTop="36dp" android:paddingBottom="36dp" android:clipToPadding="false" android:scrollbars="none" />
-        <TextView android:id="@+id/text_no_local_files" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="未在手表存储中找到任何 TXT 文件" android:textColor="#555555" android:textSize="12sp" android:layout_centerInParent="true" android:visibility="gone"/>
+        <TextView android:id="@+id/text_no_local_files" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="未找到 TXT 文件\n请确认文件已存入手表存储\n或改用「手动选择」导入" android:textColor="#555555" android:textSize="12sp" android:gravity="center" android:lineSpacingExtra="4dp" android:layout_centerInParent="true" android:visibility="gone"/>
+    </RelativeLayout>
+
+    <!-- ================= 手动文件浏览层 ================= -->
+    <RelativeLayout android:id="@+id/file_browser_container" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:visibility="gone">
+        <TextView android:id="@+id/text_browser_path" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_alignParentTop="true" android:paddingTop="20dp" android:paddingHorizontal="24dp" android:text="手表存储" android:textColor="#888888" android:textSize="10sp" android:singleLine="true" android:ellipsize="start" android:gravity="center"/>
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/file_browser_view" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/text_browser_path" android:paddingTop="8dp" android:paddingBottom="36dp" android:clipToPadding="false" android:scrollbars="none" />
+        <TextView android:id="@+id/text_browser_empty" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="此文件夹为空或不可读" android:textColor="#555555" android:textSize="12sp" android:layout_centerInParent="true" android:visibility="gone"/>
     </RelativeLayout>
 
     <!-- ================= 关于应用层 ================= -->
@@ -167,7 +180,7 @@
                 <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_logo" android:scaleType="fitCenter" android:layout_marginEnd="8dp"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="长夜腕阅" android:textColor="#D0BCFF" android:textSize="18sp" android:textStyle="bold"/>
             </LinearLayout>
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Version 1.0.1" android:textColor="#AAAAAA" android:textSize="12sp" android:layout_marginBottom="32dp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Version 1.0.2" android:textColor="#AAAAAA" android:textSize="12sp" android:layout_marginBottom="32dp"/>
 
             <!-- 联系方式) -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_home_item" android:orientation="vertical" android:gravity="center" android:paddingVertical="16dp" android:layout_marginBottom="32dp">

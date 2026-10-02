@@ -14,8 +14,8 @@ android {
         applicationId = "com.shenyue.changyemobiletxt"
         minSdk = 28
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -45,6 +45,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-wearable:18.1.0")
     // 引入 Gson 解析 JSON
     implementation("com.google.code.gson:gson:2.10.1")
+    // 引入 Jsoup 用于 EPUB 内 HTML 清洗提取纯文本
+    implementation("org.jsoup:jsoup:1.17.2")
     // 引入协程进行网络请求
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")

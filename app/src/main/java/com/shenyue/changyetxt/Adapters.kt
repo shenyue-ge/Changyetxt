@@ -23,7 +23,7 @@ class LibraryAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val file = files[position]
-        val displayName = file.name.substringAfterLast("_").removeSuffix(".json")
+        val displayName = file.name.removePrefix("book_").substringAfter("_").removeSuffix(".json")
         holder.titleView.text = "📚 $displayName"
 
         // 激活文字选中状态，触发跑马灯滚动
@@ -33,6 +33,44 @@ class LibraryAdapter(
     }
 
     override fun getItemCount() = files.size
+}
+
+// 文件浏览器适配器：目录 + TXT/EPUB 文件，用于手动逐级选择导入
+class FileBrowserAdapter(
+    private var entries: List<File>,
+    private val onItemClick: (File) -> Unit
+) : RecyclerView.Adapter<FileBrowserAdapter.ViewHolder>() {
+
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val titleView: TextView = view.findViewById(R.id.text_chapter_title)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_chapter, parent, false)
+        return ViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val file = entries[position]
+        val icon = when {
+            file.isDirectory -> "📁"
+            file.name.lowercase(java.util.Locale.getDefault()).endsWith(".epub") -> "📗"
+            else -> "📄"
+        }
+        holder.titleView.text = "$icon ${file.name}"
+
+        // 激活文字选中状态，触发跑马灯滚动
+        holder.titleView.isSelected = true
+
+        holder.itemView.setOnClickListener { onItemClick(file) }
+    }
+
+    override fun getItemCount() = entries.size
+
+    fun updateData(newEntries: List<File>) {
+        entries = newEntries
+        notifyDataSetChanged()
+    }
 }
 
 class ChapterAdapter(

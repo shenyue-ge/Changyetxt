@@ -8,9 +8,12 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.net.Uri
 import android.os.BatteryManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.Settings
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
@@ -99,6 +102,16 @@ class MainActivity : ComponentActivity() {
     private lateinit var localFilesView: RecyclerView
     private lateinit var textNoLocalFiles: TextView
 
+    // 手动文件浏览相关
+    private lateinit var fileBrowserContainer: RelativeLayout
+    private lateinit var fileBrowserView: RecyclerView
+    private lateinit var textBrowserPath: TextView
+    private lateinit var textBrowserEmpty: TextView
+    private var browserDir: File? = null
+    private var browserListJob: Job? = null
+    // 用户发起扫描/浏览后等待授权；授权完成后在回调或 onResume 中继续执行
+    private var pendingLocalAction: (() -> Unit)? = null
+
     private lateinit var prefsView: ScrollView
     private lateinit var autoScrollPrefsView: ScrollView
     private lateinit var displayPrefsView: ScrollView
@@ -147,6 +160,11 @@ class MainActivity : ComponentActivity() {
         localFilesView = findViewById(R.id.local_files_view)
         textNoLocalFiles = findViewById(R.id.text_no_local_files)
 
+        fileBrowserContainer = findViewById(R.id.file_browser_container)
+        fileBrowserView = findViewById(R.id.file_browser_view)
+        textBrowserPath = findViewById(R.id.text_browser_path)
+        textBrowserEmpty = findViewById(R.id.text_browser_empty)
+
         prefsView = findViewById(R.id.prefs_view)
         autoScrollPrefsView = findViewById(R.id.auto_scroll_prefs_view)
         displayPrefsView = findViewById(R.id.display_prefs_view)
@@ -167,6 +185,7 @@ class MainActivity : ComponentActivity() {
         directoryView.layoutManager = LinearLayoutManager(this)
         bookmarkView.layoutManager = LinearLayoutManager(this)
         localFilesView.layoutManager = LinearLayoutManager(this)
+        fileBrowserView.layoutManager = LinearLayoutManager(this)
 
         val prefs = getPreferences(MODE_PRIVATE)
         isAutoScroll = prefs.getBoolean("auto_scroll", false)
@@ -206,14 +225,9 @@ class MainActivity : ComponentActivity() {
             editIp.setSelection(editIp.text.length)
         }
 
-        findViewById<View>(R.id.btn_import_local).setOnClickListener {
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 100)
-                Toast.makeText(this, "需要存储权限以进行全盘扫描", Toast.LENGTH_SHORT).show()
-            } else {
-                scanAllLocalTxtFiles()
-            }
-        }
+        findViewById<View>(R.id.btn_import_local).setOnClickListener { requestStorageAccessThen { scanAllLocalTxtFiles() } }
+
+        findViewById<View>(R.id.btn_import_browse).setOnClickListener { requestStorageAccessThen { openFileBrowser() } }
 
         findViewById<View>(R.id.menu_item_add_bookmark).setOnClickListener { menuView.visibility = View.GONE; addBookmarkForCurrentPosition() }
         findViewById<View>(R.id.menu_item_bookmarks_manage).setOnClickListener { menuView.visibility = View.GONE; showBookmarkManager() }
@@ -278,6 +292,16 @@ class MainActivity : ComponentActivity() {
                 aboutView.visibility == View.VISIBLE -> { aboutView.visibility = View.GONE; homeView.visibility = View.VISIBLE }
                 ipInputView.visibility == View.VISIBLE -> { ipInputView.visibility = View.GONE; importMenuView.visibility = View.VISIBLE }
                 localImportContainer.visibility == View.VISIBLE -> { localImportContainer.visibility = View.GONE; importMenuView.visibility = View.VISIBLE }
+                fileBrowserContainer.visibility == View.VISIBLE -> {
+                    val dir = browserDir
+                    val root = Environment.getExternalStorageDirectory()
+                    if (dir != null && dir.absolutePath != root.absolutePath) {
+                        showBrowserDir(dir.parentFile ?: root)
+                    } else {
+                        fileBrowserContainer.visibility = View.GONE
+                        importMenuView.visibility = View.VISIBLE
+                    }
+                }
                 importMenuView.visibility == View.VISIBLE -> { importMenuView.visibility = View.GONE; homeView.visibility = View.VISIBLE }
                 libraryContainer.visibility == View.VISIBLE -> { libraryContainer.visibility = View.GONE; homeView.visibility = View.VISIBLE }
                 bookmarkListContainer.visibility == View.VISIBLE -> { bookmarkListContainer.visibility = View.GONE; menuView.visibility = View.VISIBLE }
@@ -290,6 +314,69 @@ class MainActivity : ComponentActivity() {
 
         val startupIp = prefs.getString("server_ip", "") ?: ""
         if (startupIp.isNotBlank() && !startupIp.endsWith(".")) fetchNovelFromServer(startupIp, isSilent = true)
+    }
+
+    // ================= 存储权限（分区存储适配） =================
+    // Android 11+ (Wear OS 3+)：READ_EXTERNAL_STORAGE 已无法读取其他应用创建的
+    // 非媒体文件（TXT/EPUB），必须引导用户授予"所有文件访问"(MANAGE_EXTERNAL_STORAGE)
+    private fun hasStorageAccess(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Environment.isExternalStorageManager()
+        } else {
+            checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    private fun requestStorageAccessThen(onGranted: () -> Unit) {
+        if (hasStorageAccess()) {
+            onGranted()
+            return
+        }
+        pendingLocalAction = onGranted
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            launchAllFilesAccessSettings()
+        } else {
+            requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 100)
+        }
+    }
+
+    private fun launchAllFilesAccessSettings() {
+        try {
+            startActivity(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$packageName")))
+        } catch (e: Exception) {
+            try {
+                startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+            } catch (e2: Exception) {
+                pendingLocalAction = null
+                Toast.makeText(this, "无法打开权限设置，请在系统设置中手动授予“所有文件”权限", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 100) {
+            val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            val action = pendingLocalAction
+            pendingLocalAction = null
+            if (granted && action != null) action()
+            else Toast.makeText(this, "未授予存储权限，无法访问手表文件", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 从系统"所有文件访问"设置页返回：已授权则继续之前发起的操作
+        if (pendingLocalAction != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) {
+                val action = pendingLocalAction
+                pendingLocalAction = null
+                action?.invoke()
+            } else {
+                pendingLocalAction = null
+                Toast.makeText(this, "未获得“所有文件”权限，无法读取手表文件", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     // ================= 全盘扫描 =================
@@ -339,11 +426,15 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val cleanTitle = file.nameWithoutExtension.replace(Regex("""[^a-zA-Z0-9\u4e00-\u9fa5《》〈〉()（）\[\]【】"“”'‘’,.，。！？!?_\- ]"""), "").take(50).ifBlank { "本地导入书籍" }
+                val cleanTitle = cleanBookTitle(file.nameWithoutExtension, "本地导入书籍")
 
                 val existingDirs = filesDir.listFiles { f -> f.isDirectory && f.name.startsWith("book_") } ?: emptyArray()
-                if (existingDirs.any { it.name.substringAfterLast("_") == cleanTitle }) {
-                    withContext(Dispatchers.Main) { loadingView.visibility = View.GONE; Toast.makeText(this@MainActivity, "《${cleanTitle}》已在书架中", Toast.LENGTH_SHORT).show() }
+                if (existingDirs.any { it.name.removePrefix("book_").substringAfter("_") == cleanTitle }) {
+                    withContext(Dispatchers.Main) {
+                        loadingView.visibility = View.GONE
+                        fileBrowserContainer.visibility = View.GONE
+                        Toast.makeText(this@MainActivity, "《${cleanTitle}》已在书架中", Toast.LENGTH_SHORT).show()
+                    }
                     return@launch
                 }
 
@@ -401,6 +492,7 @@ class MainActivity : ComponentActivity() {
                 withContext(Dispatchers.Main) {
                     loadingView.visibility = View.GONE
                     localImportContainer.visibility = View.GONE
+                    fileBrowserContainer.visibility = View.GONE
                     libraryContainer.visibility = View.VISIBLE
                     Toast.makeText(this@MainActivity, "完美导入：$cleanTitle", Toast.LENGTH_SHORT).show()
                     refreshLibrary()
@@ -413,6 +505,93 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    // ================= 手动文件浏览导入 =================
+    private fun openFileBrowser() {
+        importMenuView.visibility = View.GONE
+        fileBrowserContainer.visibility = View.VISIBLE
+        showBrowserDir(Environment.getExternalStorageDirectory())
+    }
+
+    private fun showBrowserDir(dir: File) {
+        browserDir = dir
+        textBrowserPath.text = prettyPath(dir)
+        browserListJob?.cancel()
+        browserListJob = lifecycleScope.launch(Dispatchers.IO) {
+            val entries = dir.listFiles()
+                ?.filter { !it.name.startsWith(".") && (it.isDirectory || isSupportedBookFile(it.name)) }
+                ?.sortedWith(compareByDescending<File> { it.isDirectory }.thenBy { it.name.lowercase(Locale.getDefault()) })
+                ?: emptyList()
+            withContext(Dispatchers.Main) {
+                textBrowserEmpty.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
+                fileBrowserView.adapter = FileBrowserAdapter(entries) { clicked ->
+                    if (clicked.isDirectory) showBrowserDir(clicked) else importPickedBook(clicked)
+                }
+                fileBrowserView.scrollToPosition(0)
+            }
+        }
+    }
+
+    private fun importPickedBook(file: File) {
+        if (file.name.lowercase(Locale.getDefault()).endsWith(".epub")) importEpubBook(file) else parseLocalTxtFile(file)
+    }
+
+    private fun importEpubBook(file: File) {
+        loadingView.visibility = View.VISIBLE
+        textLoadingStatus.text = "引擎启动：EPUB 解析中..."
+
+        lifecycleScope.launch {
+            try {
+                val chapters = EpubParser.extractChapters(file)
+                if (chapters.isEmpty()) throw Exception("未能提取到任何章节内容")
+
+                val cleanTitle = cleanBookTitle(file.nameWithoutExtension, "本地导入书籍")
+
+                val existingDirs = filesDir.listFiles { f -> f.isDirectory && f.name.startsWith("book_") } ?: emptyArray()
+                if (existingDirs.any { it.name.removePrefix("book_").substringAfter("_") == cleanTitle }) {
+                    loadingView.visibility = View.GONE
+                    fileBrowserContainer.visibility = View.GONE
+                    Toast.makeText(this@MainActivity, "《${cleanTitle}》已在书架中", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                val bookDir = File(filesDir, "book_${System.currentTimeMillis()}_$cleanTitle")
+                bookDir.mkdirs()
+
+                withContext(Dispatchers.IO) {
+                    chapters.forEachIndexed { index, chapter ->
+                        File(bookDir, "chap_$index.txt").writeText(chapter.content)
+                    }
+                    // meta.json 只存标题索引（正文已在 chap_N.txt），避免打开书架时解析全量 JSON 卡顿
+                    val metaChapters = chapters.map { Chapter(it.title, "") }
+                    File(bookDir, "meta.json").writeText(Gson().toJson(metaChapters))
+                }
+
+                loadingView.visibility = View.GONE
+                fileBrowserContainer.visibility = View.GONE
+                libraryContainer.visibility = View.VISIBLE
+                Toast.makeText(this@MainActivity, "完美导入：$cleanTitle", Toast.LENGTH_SHORT).show()
+                refreshLibrary()
+            } catch (e: Exception) {
+                loadingView.visibility = View.GONE
+                Toast.makeText(this@MainActivity, "EPUB 解析失败：${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    // ================= 通用工具 =================
+    private fun isSupportedBookFile(name: String): Boolean {
+        val lower = name.lowercase(Locale.getDefault())
+        return lower.endsWith(".txt") || lower.endsWith(".epub")
+    }
+
+    private fun cleanBookTitle(raw: String, fallback: String): String =
+        raw.replace(Regex("""[^a-zA-Z0-9\u4e00-\u9fa5《》〈〉()（）\[\]【】"“”'‘’,.，。！？!?_\- ]"""), "").take(50).ifBlank { fallback }
+
+    private fun prettyPath(dir: File): String =
+        dir.absolutePath
+            .replaceFirst("/storage/emulated/0", "手表存储")
+            .replaceFirst("/sdcard", "手表存储")
 
     // ================= 其他核心功能 =================
     private fun setupDirectoryAdapter(chapters: List<Chapter>) {
@@ -512,6 +691,31 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // ================= 书籍索引加载 =================
+    // 加载书籍的目录索引。兼容旧版本写入的全量 meta.json（正文混在索引里，
+    // 导致每次继续阅读/查目录都要解析整本书的 JSON）：检测到正文后剥离一次，
+    // 原子替换为纯标题索引，之后再打开即为毫秒级。
+    private suspend fun loadBookChapters(bookDir: File): List<Chapter> {
+        val raw: List<Chapter> = withContext(Dispatchers.IO) {
+            val metaFile = File(bookDir, "meta.json")
+            Gson().fromJson(metaFile.readText(), object : TypeToken<List<Chapter>>() {}.type)
+        }
+        if (raw.any { it.content.isNotEmpty() }) {
+            val slim = raw.map { Chapter(it.title, "") }
+            withContext(Dispatchers.IO) {
+                val metaFile = File(bookDir, "meta.json")
+                val tmp = File(bookDir, "meta.json.tmp")
+                tmp.writeText(Gson().toJson(slim))
+                if (!tmp.renameTo(metaFile)) {
+                    metaFile.writeText(Gson().toJson(slim))
+                    tmp.delete()
+                }
+            }
+            return slim
+        }
+        return raw
+    }
+
     private fun refreshLibrary() {
         val savedDirs = filesDir.listFiles { f -> f.isDirectory && f.name.startsWith("book_") }?.toList() ?: emptyList()
 
@@ -525,7 +729,7 @@ class MainActivity : ComponentActivity() {
         }
 
         libraryView.adapter = LibraryAdapter(savedDirs) { clickedDir ->
-            val bookName = clickedDir.name.substringAfterLast("_")
+            val bookName = clickedDir.name.removePrefix("book_").substringAfter("_")
             AlertDialog.Builder(this).setTitle("《$bookName》")
                 .setItems(arrayOf("继续阅读", "查看目录", "彻底删除")) { _, which ->
                     when (which) {
@@ -533,10 +737,7 @@ class MainActivity : ComponentActivity() {
                             loadingView.visibility = View.VISIBLE
                             textLoadingStatus.text = "马上就好..."
                             lifecycleScope.launch {
-                                chaptersList = withContext(Dispatchers.Default) {
-                                    val metaFile = File(clickedDir, "meta.json")
-                                    Gson().fromJson(metaFile.readText(), object : TypeToken<List<Chapter>>() {}.type)
-                                }
+                                chaptersList = loadBookChapters(clickedDir)
                                 currentNovelDir = clickedDir
                                 withContext(Dispatchers.Main) {
                                     setupDirectoryAdapter(chaptersList)
@@ -554,10 +755,7 @@ class MainActivity : ComponentActivity() {
                             loadingView.visibility = View.VISIBLE
                             textLoadingStatus.text = "正在提取目录..."
                             lifecycleScope.launch {
-                                chaptersList = withContext(Dispatchers.Default) {
-                                    val metaFile = File(clickedDir, "meta.json")
-                                    Gson().fromJson(metaFile.readText(), object : TypeToken<List<Chapter>>() {}.type)
-                                }
+                                chaptersList = loadBookChapters(clickedDir)
                                 currentNovelDir = clickedDir
                                 withContext(Dispatchers.Main) {
                                     setupDirectoryAdapter(chaptersList)
@@ -660,14 +858,11 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // 3. 清洗书名（与本地导入逻辑相同）
-                val cleanTitle = payload.bookName
-                    .replace(Regex("""[^a-zA-Z0-9\u4e00-\u9fa5《》〈〉()（）\[\]【】"“”'‘’,.，。！？!?_\- ]"""), "")
-                    .take(50)
-                    .ifBlank { "无线导入书籍" }
+                val cleanTitle = cleanBookTitle(payload.bookName, "无线导入书籍")
 
                 // 4. 查重
                 val existingDirs = filesDir.listFiles { f -> f.isDirectory && f.name.startsWith("book_") } ?: emptyArray()
-                if (existingDirs.any { it.name.substringAfterLast("_") == cleanTitle }) {
+                if (existingDirs.any { it.name.removePrefix("book_").substringAfter("_") == cleanTitle }) {
                     withContext(Dispatchers.Main) {
                         loadingView.visibility = View.GONE
                         Toast.makeText(this@MainActivity, "《${cleanTitle}》已在书架中", Toast.LENGTH_SHORT).show()
@@ -684,9 +879,9 @@ class MainActivity : ComponentActivity() {
                         val file = File(bookDir, "chap_$index.txt")
                         file.writeText(chapter.content)  // 字段名匹配你的 Chapter 类
                     }
-                    // 保存目录信息
-                    val metaJson = Gson().toJson(payload.chapters)
-                    File(bookDir, "meta.json").writeText(metaJson)
+                    // 保存目录信息：只存标题索引（正文已在 chap_N.txt），避免打开书架时解析全量 JSON 卡顿
+                    val metaChapters = payload.chapters.map { Chapter(it.title, "") }
+                    File(bookDir, "meta.json").writeText(Gson().toJson(metaChapters))
                 }
 
                 // 6. 完成：关闭加载界面，提示并刷新书架
