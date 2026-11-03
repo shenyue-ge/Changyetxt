@@ -62,7 +62,7 @@ adb install -r ChangyeReader_WearOS_vX.X.X.apk
 
 如果遇到 Bug 或有改进建议，也欢迎反馈。
 
-作者QQ：7586380
+应用交流群：1067933128
 
 ---
 

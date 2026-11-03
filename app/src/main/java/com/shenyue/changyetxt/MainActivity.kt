@@ -48,6 +48,12 @@ import java.util.UUID
 
 class MainActivity : ComponentActivity() {
 
+    companion object {
+        const val TURN_MODE_HYBRID = 0
+        const val TURN_MODE_SCROLL_ONLY = 1
+        const val TURN_MODE_TAP_ONLY = 2
+    }
+
     private var touchStartX = 0f
     private var touchStartY = 0f
 
@@ -80,6 +86,12 @@ class MainActivity : ComponentActivity() {
     private var hideScrollBarJob: Job? = null
     private var isSettingsFromReading = false
 
+    // 翻页方式：0=混合（滑动+左右点击） 1=仅滑动 2=仅左右点击
+    private var turnMode = TURN_MODE_HYBRID
+    // 左右点击单次上下滚动幅度（占阅读区高度的百分比），默认 66 与历史行为一致
+    private var turnStepPercent = 66
+    private var turnStepPx = 0
+
     // 视图
     private lateinit var homeView: ScrollView
     private lateinit var aboutView: ScrollView
@@ -92,7 +104,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var directoryContainer: RelativeLayout
     private lateinit var directoryView: RecyclerView
     private lateinit var readingView: RelativeLayout
-    private lateinit var readingScrollView: ScrollView
+    private lateinit var readingScrollView: LockableScrollView
     private lateinit var menuView: ScrollView
     private lateinit var importMenuView: ScrollView
     private lateinit var ipInputView: ScrollView
@@ -115,6 +127,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var prefsView: ScrollView
     private lateinit var autoScrollPrefsView: ScrollView
     private lateinit var displayPrefsView: ScrollView
+    private lateinit var turningPrefsView: ScrollView
     private lateinit var bookmarkListContainer: RelativeLayout
     private lateinit var bookmarkView: RecyclerView
     private lateinit var textNoBookmarks: TextView
@@ -129,6 +142,14 @@ class MainActivity : ComponentActivity() {
     private lateinit var btnToggleSpeed: Button
     private lateinit var tvFontSize: TextView
     private lateinit var tvBrightLevel: TextView
+    private lateinit var btnTurnMode: Button
+    private lateinit var tvTurnStep: TextView
+    private lateinit var textVersion: TextView
+    private lateinit var textUpdateStatus: TextView
+    private lateinit var btnCheckUpdate: Button
+    private var updateCheckJob: Job? = null
+    private lateinit var btnPageUpView: View
+    private lateinit var btnPageDownView: View
 
     private lateinit var loadingView: RelativeLayout
     private lateinit var textLoadingStatus: TextView
@@ -168,6 +189,7 @@ class MainActivity : ComponentActivity() {
         prefsView = findViewById(R.id.prefs_view)
         autoScrollPrefsView = findViewById(R.id.auto_scroll_prefs_view)
         displayPrefsView = findViewById(R.id.display_prefs_view)
+        turningPrefsView = findViewById(R.id.turning_prefs_view)
         bookmarkListContainer = findViewById(R.id.bookmark_list_container)
         bookmarkView = findViewById(R.id.bookmark_view)
         textNoBookmarks = findViewById(R.id.text_no_bookmarks)
@@ -192,6 +214,8 @@ class MainActivity : ComponentActivity() {
         scrollSpeed = prefs.getInt("scroll_speed", 1)
         currentFontSize = prefs.getFloat("font_size", 16f)
         brightLevel = prefs.getInt("bright_level", 0)
+        turnMode = prefs.getInt("turn_mode", TURN_MODE_HYBRID)
+        turnStepPercent = prefs.getInt("turn_step_percent", 66)
 
         applyDisplaySettings()
         startAutoScroll()
@@ -201,7 +225,7 @@ class MainActivity : ComponentActivity() {
                 MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                     isUserTouching = true
                     hideScrollBarJob?.cancel()
-                    if (!readingScrollView.isVerticalScrollBarEnabled) readingScrollView.isVerticalScrollBarEnabled = true
+                    if (turnMode != TURN_MODE_TAP_ONLY && !readingScrollView.isVerticalScrollBarEnabled) readingScrollView.isVerticalScrollBarEnabled = true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     hideScrollBarJob?.cancel()
@@ -219,10 +243,18 @@ class MainActivity : ComponentActivity() {
         findViewById<View>(R.id.btn_home_import).setOnClickListener { homeView.visibility = View.GONE; importMenuView.visibility = View.VISIBLE }
 
         findViewById<View>(R.id.btn_import_lan).setOnClickListener {
-            importMenuView.visibility = View.GONE
-            ipInputView.visibility = View.VISIBLE
-            editIp.setText(prefs.getString("server_ip", "192.168.31.") ?: "192.168.31.")
-            editIp.setSelection(editIp.text.length)
+            // 首次使用提示手机端下载方式；确认后照常进入 IP 输入，不阻断流程
+            AlertDialog.Builder(this)
+                .setTitle("局域网导入")
+                .setMessage("手机端下载方式请在“关于应用”中查看。\n\n继续后可输入手机端显示的 IP 地址进行传书。")
+                .setPositiveButton("继续") { _, _ ->
+                    importMenuView.visibility = View.GONE
+                    ipInputView.visibility = View.VISIBLE
+                    editIp.setText(prefs.getString("server_ip", "192.168.31.") ?: "192.168.31.")
+                    editIp.setSelection(editIp.text.length)
+                }
+                .setNegativeButton("取消", null)
+                .show()
         }
 
         findViewById<View>(R.id.btn_import_local).setOnClickListener { requestStorageAccessThen { scanAllLocalTxtFiles() } }
@@ -239,10 +271,27 @@ class MainActivity : ComponentActivity() {
 
         findViewById<Button>(R.id.btn_menu_auto_scroll).setOnClickListener { prefsView.visibility = View.GONE; autoScrollPrefsView.visibility = View.VISIBLE; updateAutoScrollUI() }
         findViewById<Button>(R.id.btn_menu_display).setOnClickListener { prefsView.visibility = View.GONE; displayPrefsView.visibility = View.VISIBLE; updateDisplayUI() }
+        findViewById<Button>(R.id.btn_menu_turning).setOnClickListener { prefsView.visibility = View.GONE; turningPrefsView.visibility = View.VISIBLE; updateTurningUI() }
         btnToggleAutoScroll = findViewById(R.id.btn_toggle_auto_scroll)
         btnToggleSpeed = findViewById(R.id.btn_toggle_speed)
         tvFontSize = findViewById(R.id.tv_font_size)
         tvBrightLevel = findViewById(R.id.tv_bright_level)
+        btnTurnMode = findViewById(R.id.btn_turn_mode)
+        tvTurnStep = findViewById(R.id.tv_turn_step)
+        textVersion = findViewById(R.id.text_version)
+        textUpdateStatus = findViewById(R.id.text_update_status)
+        btnCheckUpdate = findViewById(R.id.btn_check_update)
+
+        textVersion.text = "Version ${BuildConfig.VERSION_NAME}"
+        btnCheckUpdate.setOnClickListener { checkUpdate(manual = true) }
+
+        btnTurnMode.setOnClickListener {
+            turnMode = (turnMode + 1) % 3
+            prefs.edit().putInt("turn_mode", turnMode).apply()
+            applyTurnMode(); updateTurningUI()
+        }
+        findViewById<Button>(R.id.btn_turn_step_down).setOnClickListener { changeTurnStep(-5) }
+        findViewById<Button>(R.id.btn_turn_step_up).setOnClickListener { changeTurnStep(5) }
 
         btnToggleAutoScroll.setOnClickListener { isAutoScroll = !isAutoScroll; prefs.edit().putBoolean("auto_scroll", isAutoScroll).apply(); updateAutoScrollUI(); startAutoScroll() }
         btnToggleSpeed.setOnClickListener { scrollSpeed = (scrollSpeed + 1) % 3; prefs.edit().putInt("scroll_speed", scrollSpeed).apply(); updateAutoScrollUI(); startAutoScroll() }
@@ -253,13 +302,24 @@ class MainActivity : ComponentActivity() {
 
         val btnPageUp = findViewById<View>(R.id.btn_page_up)
         val btnPageDown = findViewById<View>(R.id.btn_page_down)
-        btnPageDown.setOnClickListener { hideScrollBarJob?.cancel(); readingScrollView.isVerticalScrollBarEnabled = false; val amt = (readingScrollView.height * 0.66).toInt(); if (readingScrollView.canScrollVertically(1)) readingScrollView.smoothScrollBy(0, amt) else loadChapter(currentChapterIndex + 1, false) }
-        btnPageUp.setOnClickListener { hideScrollBarJob?.cancel(); readingScrollView.isVerticalScrollBarEnabled = false; val amt = (readingScrollView.height * 0.66).toInt(); if (readingScrollView.canScrollVertically(-1)) readingScrollView.smoothScrollBy(0, -amt) else loadChapter(currentChapterIndex - 1, true) }
+        btnPageUpView = btnPageUp
+        btnPageDownView = btnPageDown
 
         val showMenuListener = View.OnLongClickListener { menuView.visibility = View.VISIBLE; true }
         textContent.setOnLongClickListener(showMenuListener)
         btnPageUp.setOnLongClickListener(showMenuListener)
         btnPageDown.setOnLongClickListener(showMenuListener)
+        // 兜底：仅滑动模式会关闭两侧点击区，长按菜单改由滚动区承接，
+        // 保证整个阅读区域长按都能呼出菜单
+        readingScrollView.setOnLongClickListener(showMenuListener)
+
+        // 点击两侧区域翻页；长按弹出菜单始终有效
+        btnPageUp.setOnClickListener { if (turnMode != TURN_MODE_SCROLL_ONLY) turnPageUp() }
+        btnPageDown.setOnClickListener { if (turnMode != TURN_MODE_SCROLL_ONLY) turnPageDown() }
+
+        // 必须在上述 setOnClickListener 之后调用：setOnClickListener 会把
+        // isClickable 重置为 true，否则"仅滑动"模式在冷启动后会失效
+        applyTurnMode()
 
         directoryView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) { val pos = (directoryView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition(); if (pos != RecyclerView.NO_POSITION) bottomSeekBar.progress = pos }
@@ -288,6 +348,7 @@ class MainActivity : ComponentActivity() {
                 loadingView.visibility == View.VISIBLE -> { Toast.makeText(this@MainActivity, "请稍候...", Toast.LENGTH_SHORT).show() }
                 autoScrollPrefsView.visibility == View.VISIBLE -> { autoScrollPrefsView.visibility = View.GONE; prefsView.visibility = View.VISIBLE }
                 displayPrefsView.visibility == View.VISIBLE -> { displayPrefsView.visibility = View.GONE; prefsView.visibility = View.VISIBLE }
+                turningPrefsView.visibility == View.VISIBLE -> { turningPrefsView.visibility = View.GONE; prefsView.visibility = View.VISIBLE }
                 prefsView.visibility == View.VISIBLE -> { prefsView.visibility = View.GONE; if (isSettingsFromReading) menuView.visibility = View.VISIBLE else homeView.visibility = View.VISIBLE }
                 aboutView.visibility == View.VISIBLE -> { aboutView.visibility = View.GONE; homeView.visibility = View.VISIBLE }
                 ipInputView.visibility == View.VISIBLE -> { ipInputView.visibility = View.GONE; importMenuView.visibility = View.VISIBLE }
@@ -314,6 +375,9 @@ class MainActivity : ComponentActivity() {
 
         val startupIp = prefs.getString("server_ip", "") ?: ""
         if (startupIp.isNotBlank() && !startupIp.endsWith(".")) fetchNovelFromServer(startupIp, isSilent = true)
+
+        // 启动后延迟检查更新，避免与启动渲染争抢资源
+        lifecycleScope.launch { delay(3000); maybeAutoCheckUpdate() }
     }
 
     // ================= 存储权限（分区存储适配） =================
@@ -800,6 +864,63 @@ class MainActivity : ComponentActivity() {
         window.attributes = layoutParams
         updateDisplayUI()
     }
+    // ================= 翻页方式 =================
+    // 应用当前翻页模式：仅点击模式下禁用滑动手势（避免误触），其余模式恢复
+    private fun applyTurnMode() {
+        readingScrollView.touchScrollEnabled = turnMode != TURN_MODE_TAP_ONLY
+        // 仅滑动模式：两侧透明点击区必须停止拦截事件，否则边缘区域无法滑动。
+        // 同时关闭 longClickable，否则 View 仍会在 ACTION_DOWN 时消费触摸。
+        if (::btnPageUpView.isInitialized) {
+            val tapEnabled = turnMode != TURN_MODE_SCROLL_ONLY
+            btnPageUpView.isClickable = tapEnabled
+            btnPageUpView.isLongClickable = tapEnabled
+            btnPageDownView.isClickable = tapEnabled
+            btnPageDownView.isLongClickable = tapEnabled
+        }
+        updateTurnStepPx()
+        updateTurningUI()
+    }
+
+    private fun updateTurnStepPx() {
+        val h = if (readingScrollView.height > 0) readingScrollView.height else resources.displayMetrics.heightPixels
+        turnStepPx = (h * turnStepPercent / 100)
+    }
+
+    private fun changeTurnStep(delta: Int) {
+        turnStepPercent = (turnStepPercent + delta).coerceIn(20, 100)
+        getPreferences(MODE_PRIVATE).edit().putInt("turn_step_percent", turnStepPercent).apply()
+        updateTurnStepPx()
+        updateTurningUI()
+    }
+
+    private fun turnPageDown() {
+        if (turnMode == TURN_MODE_SCROLL_ONLY) return
+        hideScrollBarJob?.cancel()
+        readingScrollView.isVerticalScrollBarEnabled = false
+        updateTurnStepPx()
+        if (readingScrollView.canScrollVertically(1)) readingScrollView.smoothScrollBy(0, turnStepPx)
+        else loadChapter(currentChapterIndex + 1, false)
+    }
+
+    private fun turnPageUp() {
+        if (turnMode == TURN_MODE_SCROLL_ONLY) return
+        hideScrollBarJob?.cancel()
+        readingScrollView.isVerticalScrollBarEnabled = false
+        updateTurnStepPx()
+        if (readingScrollView.canScrollVertically(-1)) readingScrollView.smoothScrollBy(0, -turnStepPx)
+        else loadChapter(currentChapterIndex - 1, true)
+    }
+
+    private fun updateTurningUI() {
+        if (!::btnTurnMode.isInitialized) return
+        btnTurnMode.text = when (turnMode) {
+            TURN_MODE_SCROLL_ONLY -> "操作：仅滑动"
+            TURN_MODE_TAP_ONLY -> "操作：仅左右点击"
+            else -> "操作：混合"
+        }
+        tvTurnStep.text = "幅度: $turnStepPercent%"
+    }
+
     private fun updateDisplayUI() { if (::tvFontSize.isInitialized) { tvFontSize.text = "字号: ${currentFontSize.toInt()}"; tvBrightLevel.text = if (brightLevel == 0) "亮度: 自动" else "亮度: ${brightLevel * 20}%" } }
     private fun updateAutoScrollUI() { if (::btnToggleAutoScroll.isInitialized) { btnToggleAutoScroll.text = if (isAutoScroll) "开关：开" else "开关：关"; btnToggleAutoScroll.backgroundTintList = ColorStateList.valueOf(Color.parseColor(if (isAutoScroll) "#E91E63" else "#444444")); btnToggleSpeed.text = when(scrollSpeed) { 0 -> "速度：慢"; 1 -> "速度：中"; else -> "速度：快" } } }
 
@@ -810,12 +931,69 @@ class MainActivity : ComponentActivity() {
             while (isActive) {
                 delay(when (scrollSpeed) { 0 -> 55L; 1 -> 30L; else -> 15L })
                 if (isUserTouching) continue
-                if (readingView.visibility == View.VISIBLE && menuView.visibility == View.GONE && prefsView.visibility == View.GONE && autoScrollPrefsView.visibility == View.GONE && displayPrefsView.visibility == View.GONE && bookmarkListContainer.visibility == View.GONE) {
+                if (readingView.visibility == View.VISIBLE && menuView.visibility == View.GONE && prefsView.visibility == View.GONE && autoScrollPrefsView.visibility == View.GONE && displayPrefsView.visibility == View.GONE && turningPrefsView.visibility == View.GONE && bookmarkListContainer.visibility == View.GONE) {
                     if (readingScrollView.isVerticalScrollBarEnabled) readingScrollView.isVerticalScrollBarEnabled = false
                     if (readingScrollView.canScrollVertically(1)) readingScrollView.scrollBy(0, 1) else { delay(2500); if (readingView.visibility == View.VISIBLE && !readingScrollView.canScrollVertically(1) && !isUserTouching) { loadChapter(currentChapterIndex + 1, false); delay(1500) } }
                 }
             }
         }
+    }
+
+    // ================= 检查更新 =================
+    private fun checkUpdate(manual: Boolean) {
+        if (updateCheckJob?.isActive == true) return
+        if (manual) {
+            btnCheckUpdate.isEnabled = false
+            textUpdateStatus.text = "正在检查更新..."
+        }
+        updateCheckJob = lifecycleScope.launch {
+            val result = UpdateChecker.check(BuildConfig.VERSION_CODE)
+            getPreferences(MODE_PRIVATE).edit()
+                .putLong("last_update_check", System.currentTimeMillis())
+                .apply()
+
+            if (manual) btnCheckUpdate.isEnabled = true
+
+            when (result) {
+                is UpdateChecker.Result.Available -> {
+                    textUpdateStatus.text = buildString {
+                        append("发现新版本 v${result.info.versionName}")
+                        if (result.info.notes.isNotBlank()) append("\n${result.info.notes}")
+                        append("\n请到应用交流群（1067933128）获取安装包")
+                    }
+                    textUpdateStatus.setTextColor(Color.parseColor("#D0BCFF"))
+                    if (manual) {
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle("发现新版本")
+                            .setMessage("当前 v${BuildConfig.VERSION_NAME}，最新 v${result.info.versionName}.\n\n请到应用交流群（1067933128）获取安装包。")
+                            .setPositiveButton("知道了", null)
+                            .show()
+                    }
+                }
+                UpdateChecker.Result.UpToDate -> {
+                    if (manual) {
+                        textUpdateStatus.text = "已是最新版本"
+                        textUpdateStatus.setTextColor(Color.parseColor("#888888"))
+                        Toast.makeText(this@MainActivity, "已是最新版本", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                UpdateChecker.Result.Unavailable -> {
+                    // 自动检查时保持沉默：网络不可用是常态，不应打扰阅读
+                    if (manual) {
+                        textUpdateStatus.text = "无法检查更新\n请确认网络连接，或稍后重试"
+                        textUpdateStatus.setTextColor(Color.parseColor("#888888"))
+                    }
+                }
+            }
+        }
+    }
+
+    // 每周自动检查一次；用户手动检查不受此限制
+    private fun maybeAutoCheckUpdate() {
+        val prefs = getPreferences(MODE_PRIVATE)
+        val last = prefs.getLong("last_update_check", 0L)
+        val weekMs = 7L * 24 * 60 * 60 * 1000
+        if (System.currentTimeMillis() - last >= weekMs) checkUpdate(manual = false)
     }
 
     private fun fetchNovelFromServer(targetIp: String, isSilent: Boolean = false) {

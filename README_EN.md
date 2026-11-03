@@ -62,7 +62,7 @@ Issues and Pull Requests are welcome.
 
 If you find a bug or have suggestions for improvement, feel free to open an Issue or contact the author.
 
-QQ: 7586380
+App community group: 1067933128
 
 ---
 
