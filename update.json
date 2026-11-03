@@ -1,6 +1,6 @@
 {
-  "versionCode": 5,
-  "versionName": "1.0.4",
-  "notes": "新增翻页方式与幅度设置，局域网导入提示优化",
+  "versionCode": 7,
+  "versionName": "1.0.6",
+  "notes": "测试更新检查：如果你看到这个提示，说明版本检测工作正常。",
   "downloadUrl": ""
 }

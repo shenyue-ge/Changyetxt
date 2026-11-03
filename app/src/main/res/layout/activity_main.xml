@@ -194,7 +194,7 @@
                 <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_logo" android:scaleType="fitCenter" android:layout_marginEnd="8dp"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="长夜腕阅" android:textColor="#D0BCFF" android:textSize="18sp" android:textStyle="bold"/>
             </LinearLayout>
-            <TextView android:id="@+id/text_version" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Version 1.0.4" android:textColor="#AAAAAA" android:textSize="12sp" android:layout_marginBottom="8dp"/>
+            <TextView android:id="@+id/text_version" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Version 1.0.5" android:textColor="#AAAAAA" android:textSize="12sp" android:layout_marginBottom="8dp"/>
 
             <!-- 检查更新 -->
             <Button android:id="@+id/btn_check_update" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="检查更新" android:backgroundTint="#444444" android:textColor="#FFFFFF" android:textSize="13sp" android:minWidth="120dp" android:minHeight="40dp" android:layout_marginBottom="8dp"/>

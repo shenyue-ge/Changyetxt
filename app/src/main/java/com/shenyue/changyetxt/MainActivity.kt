@@ -148,6 +148,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var textUpdateStatus: TextView
     private lateinit var btnCheckUpdate: Button
     private var updateCheckJob: Job? = null
+    // 本次运行已弹过提示的版本号，避免同一版本反复弹窗
+    private var notifiedVersionCode = -1
+    // 当前正在显示的更新弹窗，防止重复叠加
+    private var updateDialog: AlertDialog? = null
     private lateinit var btnPageUpView: View
     private lateinit var btnPageDownView: View
 
@@ -948,9 +952,12 @@ class MainActivity : ComponentActivity() {
         }
         updateCheckJob = lifecycleScope.launch {
             val result = UpdateChecker.check(BuildConfig.VERSION_CODE)
-            getPreferences(MODE_PRIVATE).edit()
-                .putLong("last_update_check", System.currentTimeMillis())
-                .apply()
+            // 仅在真正拿到清单时记录时间；网络失败不推迟下次自动检查
+            if (result != UpdateChecker.Result.Unavailable) {
+                getPreferences(MODE_PRIVATE).edit()
+                    .putLong("last_update_check", System.currentTimeMillis())
+                    .apply()
+            }
 
             if (manual) btnCheckUpdate.isEnabled = true
 
@@ -962,13 +969,8 @@ class MainActivity : ComponentActivity() {
                         append("\n请到应用交流群（1067933128）获取安装包")
                     }
                     textUpdateStatus.setTextColor(Color.parseColor("#D0BCFF"))
-                    if (manual) {
-                        AlertDialog.Builder(this@MainActivity)
-                            .setTitle("发现新版本")
-                            .setMessage("当前 v${BuildConfig.VERSION_NAME}，最新 v${result.info.versionName}.\n\n请到应用交流群（1067933128）获取安装包。")
-                            .setPositiveButton("知道了", null)
-                            .show()
-                    }
+                    // 自动检查与手动检查都弹窗；无论当前停留在哪个页面
+                    showUpdateDialog(result.info)
                 }
                 UpdateChecker.Result.UpToDate -> {
                     if (manual) {
@@ -988,7 +990,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // 每周自动检查一次；用户手动检查不受此限制
+    // 显示更新提示弹窗。挂在 Activity 上，因此在任何页面都会覆盖显示
+    private fun showUpdateDialog(info: UpdateInfo) {
+        if (isFinishing || isDestroyed) return
+        // 同一版本本次运行只提示一次，避免每次进出页面反复打扰
+        if (notifiedVersionCode == info.versionCode) return
+        if (updateDialog?.isShowing == true) return
+        notifiedVersionCode = info.versionCode
+
+        val message = buildString {
+            append("当前版本：v${BuildConfig.VERSION_NAME}\n")
+            append("最新版本：v${info.versionName}\n")
+            if (info.notes.isNotBlank()) append("\n${info.notes}\n")
+            append("\n请到应用交流群（1067933128）获取安装包。")
+        }
+        updateDialog = AlertDialog.Builder(this)
+            .setTitle("发现新版本")
+            .setMessage(message)
+            .setPositiveButton("知道了") { d, _ -> d.dismiss() }
+            .setCancelable(true)
+            .create()
+            .also { it.setOnDismissListener { updateDialog = null }; it.show() }
+    }
+
+    // 每周自动检查一次：距离上次检查超过 7 天（含首次安装，last=0）
     private fun maybeAutoCheckUpdate() {
         val prefs = getPreferences(MODE_PRIVATE)
         val last = prefs.getLong("last_update_check", 0L)
